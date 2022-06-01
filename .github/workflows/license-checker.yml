@@ -3,7 +3,9 @@ name: Check Licenses
 on:
   workflow_call:
     secrets:
-      token:
+      GPR_READ_TOKEN:
+        required: true
+      CDK_GITHUB_ACCESS_TOKEN:
         required: true
 
 jobs:
