@@ -1,0 +1,65 @@
+on: 
+  push:
+    branches:
+      - develop
+      - master
+jobs:
+  check:
+    name: Check files
+    outputs:
+      run_job: ${{ steps.check_files.outputs.run_job }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - name: check modified files
+        id: check_files
+        run: |
+          echo "=============== list modified files ==============="
+          git log -m -1 --name-only --pretty="format:" ${{ github.sha }}
+
+          echo "========== check paths of modified files =========="
+          git log -m -1 --name-only --pretty="format:" ${{ github.sha }} > files.txt
+          while IFS= read -r file
+          do
+            echo $file
+            if [[ $file == bin/* || $file == cdk/pipelines/* ]]; then
+              echo "This modified file belongs to a pipeline change."
+              echo "::set-output name=run_job::true"
+              break
+            else
+              echo "::set-output name=run_job::false"
+            fi
+          done < files.txt
+  cdk_deploy:
+    needs: check
+    if: needs.check.outputs.run_job == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Repository name
+        run: echo "REPOSITORY_NAME=$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}' | sed -e "s/:refs//")" >> $GITHUB_ENV
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - run: mkdir -p ${{ github.workspace }}/dist
+      - name: cdk deploy
+        uses: vector-remote-care/aws-cdk-github-actions@master
+        with:
+          working_dir: '.'
+          debug_log: 'true'
+          cdk_stack: '**(Testing|${{ steps.extract_branch.outputs.branch }})**'
+          cdk_subcommand: 'deploy'
+          cdk_args: '--require-approval never --context REPOSITORY_NAME=${{ env.REPOSITORY_NAME }} --context BRANCH_NAME=${{ steps.extract_branch.outputs.branch }}'
+          actions_comment: false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-west-2'
+          REPOSITORY_NAME: ${{ env.REPOSITORY_NAME }}
+          CDK_GITHUB_ACCESS_TOKEN: ${{ secrets.CDK_GITHUB_ACCESS_TOKEN }}
+          GPR_READ_TOKEN: ${{ secrets.GPR_READ_TOKEN }}

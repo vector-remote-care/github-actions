@@ -1,0 +1,28 @@
+name: Check Licenses
+on:
+  pull_request:
+    paths:
+      - 'package-lock.json'
+jobs:
+  licenses:
+    name: Check licenses
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: npm set //npm.pkg.github.com/:_authToken ${{ secrets.GPR_READ_TOKEN }} && 
+          git config --global url."https://${{ secrets.CDK_GITHUB_ACCESS_TOKEN }}@github.com/".insteadOf https://github.com/ && 
+          NODE_ENV=production npm i --production
+
+      - uses: vector-remote-care/nodejs-license-checker@main
+        with:
+          fail-on:  |
+            GPL
+            AGPL
+            JRL
+            AFPL
