@@ -1,0 +1,30 @@
+name: Notify RingCentral When Reviewer Added
+on:
+  workflow_call:
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Map team to webhook
+        id: map
+        run: |
+          if [[ "${{ github.event.requested_reviewer.type }}" != "Team" ]]; then
+            echo "notify=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          TEAM="${{ github.event.requested_reviewer.login }}"
+          if [[ "$TEAM" == "da" ]]; then
+            echo "webhook=https://hooks.ringcentral.com/webhook/v2/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjExNjUzODU3MjkiLCJpZCI6IjIzMjYzNjQxODcifQ.-CUqmsraBYvjn1Bgq4TElNfunV1aYY2--Mf_ETmrF1s" >> $GITHUB_OUTPUT
+            echo "notify=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+      - name: Send notification to RingCentral
+        if: steps.map.outputs.notify == 'true'
+        run: |
+          curl -X POST -H 'Content-Type: application/json' \
+            -d '{
+                "iconUri": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+                "text": "**PR ready for review**: ${{ github.event.pull_request.html_url }}\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"
+            }' \
+            "${{ steps.map.outputs.webhook }}"
