@@ -1,0 +1,9 @@
+{
+  "pull_request": {
+    "html_url": "https://github.com/vector-remote-care/github-actions/pull/1"
+  },
+  "requested_reviewer": {
+    "type": "Team",
+    "login": "da"
+  }
+}
