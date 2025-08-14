@@ -8,12 +8,7 @@ jobs:
       - name: Map team to webhook
         id: map
         run: |
-          if [[ "${{ github.event.requested_reviewer.type }}" != "Team" ]]; then
-            echo "notify=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          TEAM="${{ github.event.requested_reviewer.login }}"
+          TEAM="${{ github.event.requested_team.name }}"
           if [[ "$TEAM" == "da" ]]; then
             echo "webhook=https://hooks.ringcentral.com/webhook/v2/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjExNjUzODU3MjkiLCJpZCI6IjIzMjYzNjQxODcifQ.-CUqmsraBYvjn1Bgq4TElNfunV1aYY2--Mf_ETmrF1s" >> $GITHUB_OUTPUT
             echo "notify=true" >> $GITHUB_OUTPUT
