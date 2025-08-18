@@ -16,10 +16,19 @@ jobs:
           fi
       - name: Send notification to RingCentral
         if: steps.map.outputs.notify == 'true'
+        env:
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          SENDER_LOGIN: ${{ github.event.sender.login }}
         run: |
+          FULL_NAME=$(curl -s -H "Authorization: token $GH_API_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/users/$SENDER_LOGIN" | jq -r '.name')
+          if [ -z "$FULL_NAME" ] || [ "$FULL_NAME" = "null" ]; then
+            FULL_NAME="$SENDER_LOGIN"
+          fi
           curl -X POST -H 'Content-Type: application/json' \
             -d '{
                 "iconUri": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-                "text": "**PR ready for review**: ${{ github.event.pull_request.html_url }}\n**Requested by**: ${{ github.event.sender.login }}\n**Changes**: +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }} lines\n\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"
+                "text": "**PR ready for review**: ${{ github.event.pull_request.html_url }}\n**Requested by**: $FULL_NAME\n**Changes**: +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }} lines\n\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"
             }' \
             "${{ steps.map.outputs.webhook }}"

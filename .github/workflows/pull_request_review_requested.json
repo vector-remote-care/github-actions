@@ -1,9 +1,13 @@
 {
   "pull_request": {
-    "html_url": "https://github.com/vector-remote-care/github-actions/pull/1"
+    "html_url": "https://github.com/vector-remote-care/github-actions/pull/1",
+    "additions": 42,
+    "deletions": 7
   },
-  "requested_reviewer": {
-    "type": "Team",
-    "login": "da"
+  "requested_team": {
+    "name": "da"
+  },
+  "sender": {
+    "login": "lothalin"
   }
 }
