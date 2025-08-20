@@ -35,6 +35,7 @@ One example workflow in this repository sends notifications to RingCentral when 
        uses: vector-remote-care/github-actions/.github/workflows/ringcentral-reviewer-notify.yml@main
    ```
 2. Make sure your teams and webhook URLs are configured in the shared workflow.
+3. The GitHub API token needs to exist as a secret in the originating repo, where the workflow is called from. So when adding this to a new repo the api token will also need to be added.
 
 ---
 
