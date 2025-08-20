@@ -34,10 +34,8 @@ jobs:
           echo "Additions: ${{ github.event.pull_request.additions }}"
           echo "Deletions: ${{ github.event.pull_request.deletions }}"
           curl -X POST -H 'Content-Type: application/json' \
-            -d "$(jq -n \
-              --arg url \"${{ github.event.pull_request.html_url }}\" \
-              --arg name \"$FULL_NAME\" \
-              --arg additions \"${{ github.event.pull_request.additions }}\" \
-              --arg deletions \"${{ github.event.pull_request.deletions }}\" \
-              '{"iconUri": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", "text": "**PR ready for review**: \($url)\n**Requested by**: \($name)\n**Changes**: +\($additions) -\($deletions) lines\n\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"}'\n+            )" \
+            -d '{
+              "iconUri": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+              "text": "**PR ready for review**: '${{ github.event.pull_request.html_url }}'\n**Requested by**: '$FULL_NAME'\n**Changes**: +'${{ github.event.pull_request.additions }}' -'${{ github.event.pull_request.deletions }}' lines\n\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"
+            }' \
             "${{ steps.map.outputs.webhook }}"
