@@ -32,9 +32,5 @@ jobs:
           echo "Additions: ${{ github.event.pull_request.additions }}"
           echo "Deletions: ${{ github.event.pull_request.deletions }}"
           curl -X POST -H 'Content-Type: application/json' \
-            -d @- "${{ steps.map.outputs.webhook }}" <<EOF
-            {
-              "iconUri": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
-              "text": "**PR ready for review**: ${{ github.event.pull_request.html_url }}\n**Requested by**: $FULL_NAME\n**Changes**: +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }} lines\n\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"
-            }
-            EOF
+            -d "{\n  \"iconUri\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\",\n  \"text\": \"**PR ready for review**: ${{ github.event.pull_request.html_url }}\\n**Requested by**: $FULL_NAME\\n**Changes**: +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }} lines\\n\\nRemember to use helpful emojis to let the team know if you approve or have questions!\\n👀 Currently reviewing\\n✅ Approved\\n❓ Questions? Reply with comments here\"\n}" \
+            "${{ steps.map.outputs.webhook }}"
