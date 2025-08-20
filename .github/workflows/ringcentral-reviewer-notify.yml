@@ -20,9 +20,11 @@ jobs:
           GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
           SENDER_LOGIN: ${{ github.event.sender.login }}
         run: |
-          FULL_NAME=$(curl -s -H "Authorization: token $GH_API_TOKEN" \
+          API_RESPONSE=$(curl -s -H "Authorization: token $GH_API_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/users/$SENDER_LOGIN" | jq -r '.name')
+            "https://api.github.com/users/$SENDER_LOGIN")
+          echo "GitHub API response: $API_RESPONSE"
+          FULL_NAME=$(echo "$API_RESPONSE" | jq -r '.name')
           if [ -z "$FULL_NAME" ] || [ "$FULL_NAME" = "null" ]; then
             FULL_NAME="$SENDER_LOGIN"
           fi
@@ -36,6 +38,5 @@ jobs:
               --arg name \"$FULL_NAME\" \
               --arg additions \"${{ github.event.pull_request.additions }}\" \
               --arg deletions \"${{ github.event.pull_request.deletions }}\" \
-              --arg text \"**PR ready for review**: $url\\n**Requested by**: $name\\n**Changes**: +$additions -$deletions lines\\n\\nRemember to use helpful emojis to let the team know if you approve or have questions!\\n👀 Currently reviewing\\n✅ Approved\\n❓ Questions? Reply with comments here\" \
-              '{iconUri: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", text: $text}'\n+            )" \
+              '{iconUri: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", text: "**PR ready for review**: \($url)\n**Requested by**: \($name)\n**Changes**: +\($additions) -\($deletions) lines\n\nRemember to use helpful emojis to let the team know if you approve or have questions!\n👀 Currently reviewing\n✅ Approved\n❓ Questions? Reply with comments here"}'\n+            )" \
             "${{ steps.map.outputs.webhook }}"
