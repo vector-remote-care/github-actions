@@ -10,14 +10,14 @@ jobs:
         run: |
           TEAM="${{ github.event.requested_team.name }}"
           if [[ "$TEAM" == "DA" ]]; then
-            echo "webhook=https://hooks.ringcentral.com/webhook/v2/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjExNjUzODU3MjkiLCJpZCI6IjIzMjYzNjQxODcifQ.-CUqmsraBYvjn1Bgq4TElNfunV1aYY2--Mf_ETmrF1s" >> $GITHUB_OUTPUT
+            echo "webhook=https://hooks.ringcentral.com/webhook/v2/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjExNjUzODU3MjkiLCJpZCI6IjMyMzIzOTkzODcifQ.dIwsaKBTQ0pcw9Y1dnqC_R_DZJ_4_mEpzZUDH1HZ44Y" >> $GITHUB_OUTPUT
             echo "notify=true" >> $GITHUB_OUTPUT
             exit 0
           fi
       - name: Send notification to RingCentral
         if: steps.map.outputs.notify == 'true'
         env:
-          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          GH_API_TOKEN: ${{ secrets.BUMP_GITHUB_TOKEN }}
           SENDER_LOGIN: ${{ github.event.sender.login }}
         run: |
           API_RESPONSE=$(curl -s -H "Authorization: token $GH_API_TOKEN" \
