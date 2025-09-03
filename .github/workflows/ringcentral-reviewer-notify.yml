@@ -20,6 +20,12 @@ jobs:
             echo "notify=true" >> $GITHUB_OUTPUT
             exit 0
           fi
+
+          if [[ "$TEAM" == "DB Management" ]]; then
+            echo "webhook=https://hooks.ringcentral.com/webhook/v2/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjExNjUzODU3MjkiLCJpZCI6IjMyNzQ3NjAyMTkifQ.l1Qrlwla_5LaqkCMt-mAGzVNn4cPrqHS4FfBXQ_4R3g" >> $GITHUB_OUTPUT
+            echo "notify=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
       - name: Send notification to RingCentral
         if: steps.map.outputs.notify == 'true'
         env:
