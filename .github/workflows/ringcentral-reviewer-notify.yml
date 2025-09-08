@@ -9,7 +9,7 @@ jobs:
         id: map
         run: |
           TEAM="${{ github.event.requested_team.name }}"
-          if [[ "$TEAM" == "DA" ]]; then
+          if [[ "$TEAM" == "Data Team" ]]; then
             echo "webhook=https://hooks.ringcentral.com/webhook/v2/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvdCI6ImMiLCJvaSI6IjExNjUzODU3MjkiLCJpZCI6IjIzMjYzNjQxODcifQ.-CUqmsraBYvjn1Bgq4TElNfunV1aYY2--Mf_ETmrF1s" >> $GITHUB_OUTPUT
             echo "notify=true" >> $GITHUB_OUTPUT
             exit 0
