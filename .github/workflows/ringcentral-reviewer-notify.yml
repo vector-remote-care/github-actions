@@ -96,6 +96,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BUMP_GITHUB_TOKEN }}
         run: |
+          gh label create "size/XS" --color "0E8A16" --description "Extra small PR" --repo ${{ github.repository }} 2>/dev/null || true
+          gh label create "size/S" --color "0E8A16" --description "Small PR" --repo ${{ github.repository }} 2>/dev/null || true
+          gh label create "size/M" --color "FBCA04" --description "Medium PR" --repo ${{ github.repository }} 2>/dev/null || true
+          gh label create "size/L" --color "E99695" --description "Large PR" --repo ${{ github.repository }} 2>/dev/null || true
+          gh label create "size/XL" --color "D93F0B" --description "Extra large PR" --repo ${{ github.repository }} 2>/dev/null || true
+
           EXISTING_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels -q '.labels[].name' | grep "^size/" || true)
           for label in $EXISTING_LABELS; do
             gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --remove-label "$label" || true
