@@ -26,6 +26,83 @@ jobs:
             echo "notify=true" >> $GITHUB_OUTPUT
             exit 0
           fi
+
+      - name: Calculate PR size
+        id: size
+        if: steps.map.outputs.notify == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.BUMP_GITHUB_TOKEN }}
+        run: |
+          FILES_JSON=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files --paginate)
+          ADDITIONS=0
+          DELETIONS=0
+
+          while IFS= read -r file; do
+            filename=$(echo "$file" | jq -r '.filename')
+            adds=$(echo "$file" | jq -r '.additions')
+            dels=$(echo "$file" | jq -r '.deletions')
+
+            if [[ "$filename" =~ (package-lock\.json|yarn\.lock|pnpm-lock\.yaml|Gemfile\.lock|composer\.lock|Cargo\.lock|poetry\.lock)$ ]]; then
+              echo "Skipping lock file: $filename"
+              continue
+            fi
+
+            if [[ "$filename" =~ \.generated\. ]] || [[ "$filename" =~ /generated/ ]]; then
+              echo "Skipping generated file: $filename"
+              continue
+            fi
+
+            if [[ "$filename" =~ \.(test|spec)\. ]] || [[ "$filename" =~ /__tests__/ ]] || [[ "$filename" =~ (^|/)tests?/ ]]; then
+              echo "Skipping test file: $filename"
+              continue
+            fi
+
+            ADDITIONS=$((ADDITIONS + adds))
+            DELETIONS=$((DELETIONS + dels))
+          done < <(echo "$FILES_JSON" | jq -c '.[]')
+
+          WEIGHTED_SIZE=$(echo "$ADDITIONS + ($DELETIONS * 0.5)" | bc | cut -d'.' -f1)
+
+          if [ "$WEIGHTED_SIZE" -lt 10 ]; then
+            SIZE_LABEL="XS"
+            SIZE_ICON="🟢"
+          elif [ "$WEIGHTED_SIZE" -lt 100 ]; then
+            SIZE_LABEL="S"
+            SIZE_ICON="🟢"
+          elif [ "$WEIGHTED_SIZE" -lt 500 ]; then
+            SIZE_LABEL="M"
+            SIZE_ICON="🟡"
+          elif [ "$WEIGHTED_SIZE" -lt 1000 ]; then
+            SIZE_LABEL="L"
+            SIZE_ICON="🟠"
+          else
+            SIZE_LABEL="XL"
+            SIZE_ICON="🔴"
+          fi
+
+          echo "Filtered additions: $ADDITIONS"
+          echo "Filtered deletions: $DELETIONS"
+          echo "Weighted size: $WEIGHTED_SIZE"
+          echo "Size label: $SIZE_LABEL"
+
+          echo "label=size/$SIZE_LABEL" >> $GITHUB_OUTPUT
+          echo "icon=$SIZE_ICON" >> $GITHUB_OUTPUT
+          echo "display=$SIZE_ICON $SIZE_LABEL" >> $GITHUB_OUTPUT
+
+      - name: Add size label to PR
+        if: steps.map.outputs.notify == 'true' && steps.size.outputs.label
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.BUMP_GITHUB_TOKEN }}
+        run: |
+          EXISTING_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels -q '.labels[].name' | grep "^size/" || true)
+          for label in $EXISTING_LABELS; do
+            gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --remove-label "$label" || true
+          done
+
+          gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label "${{ steps.size.outputs.label }}"
+
       - name: Send notification to RingCentral
         if: steps.map.outputs.notify == 'true'
         env:
@@ -44,5 +121,5 @@ jobs:
           echo "Additions: ${{ github.event.pull_request.additions }}"
           echo "Deletions: ${{ github.event.pull_request.deletions }}"
           curl -X POST -H 'Content-Type: application/json' \
-            -d "{\"iconUri\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\", \"text\": \"**PR ready for review**: ${{ github.event.pull_request.html_url }}\\n**Requested by**: $FULL_NAME\\n**Requesting Review From**: ${{ github.event.requested_team.name }}\\n**Changes**: +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }} lines\\n\\nRemember to use helpful emojis to let the team know if you approve or have questions!\\n👀 Currently reviewing\\n✅ Approved\\n❓ Questions? Reply with comments here\"}" \
+            -d "{\"iconUri\": \"https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png\", \"text\": \"**PR ready for review**: ${{ github.event.pull_request.html_url }}\\n**Requested by**: $FULL_NAME\\n**Requesting Review From**: ${{ github.event.requested_team.name }}\\n**Changes**: +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }} lines ${{ steps.size.outputs.display }}\\n\\nRemember to use helpful emojis to let the team know if you approve or have questions!\\n👀 Currently reviewing\\n✅ Approved\\n❓ Questions? Reply with comments here\"}" \
             "${{ steps.map.outputs.webhook }}"

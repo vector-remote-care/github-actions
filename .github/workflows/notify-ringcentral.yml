@@ -1,0 +1,8 @@
+name: Notify RingCentral When Reviewer Added
+on:
+  pull_request:
+    types: [review_requested]
+jobs:
+  notify:
+    uses: vector-remote-care/github-actions/.github/workflows/ringcentral-reviewer-notify.yml@master
+    secrets: inherit
